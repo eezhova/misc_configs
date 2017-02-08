@@ -1,0 +1,67 @@
+builder:
+  push: True
+registry:
+  address: "127.0.0.1:31500"
+repositories:
+  skip_empty: True
+nodes:
+  node1:
+    roles:
+      - controller
+      - openvswitch
+  node[2-3]:
+    roles:
+      - compute
+      - openvswitch
+roles:
+  controller:
+    - etcd
+    - glance-api
+    - glance-registry
+    - horizon
+    - keystone
+    - mariadb
+    - memcached
+    - opendaylight
+    - neutron-dhcp-agent
+#    - neutron-l3-agent
+    - neutron-metadata-agent
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+    - rabbitmq
+  compute:
+    - nova-compute
+    - nova-libvirt
+  openvswitch:
+#    - neutron-openvswitch-agent
+    - openvswitch-db
+    - openvswitch-vswitchd
+configs:
+  private_interface: ens3
+  public_interface: ens3
+  neutron:
+    plugin_agent: "opendaylight"
+    physnets:
+        - name: "physnet1"
+          bridge_name: "br-ex"
+          interface: "ens7"
+          flat: false
+          vlan_range: "1001:3000"
+    ml2:
+        tenant_network_types:
+          - "vlan"
+          - "vxlan"
+        vni_ranges:
+          - "1000:2000"
+#    bootstrap:
+#      external:
+ #       enable: false
+#      internal:
+#        enable: false
+
+versions:
+  ovs_version: "2.6.1"

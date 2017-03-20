@@ -1,0 +1,197 @@
+builder:
+  push: True
+registry:
+  address: "127.0.0.1:31500"
+repositories:
+  skip_empty: True
+services:
+  database:
+    service_def: galera
+  rpc:
+    service_def: rabbitmq
+  notifications:
+    service_def: rabbitmq
+
+nodes:
+  node1:
+    roles:
+      - controller
+      - openvswitch
+      - compute
+      - db
+      - messaging
+    configs:
+      private_interface: ens1f0
+      public_interface: ens2f1
+      neutron:
+        physnets:
+          - name: "physnet1"
+            bridge_name: "br-ex"
+            interface: "ens2f1"
+            flat: false
+            vlan_range: "50:1030"
+        sriov:
+          enabled: true
+          devices:
+            - name: "ens1f1"
+              physnets:
+                - "physnet1"
+      nova:
+        sriov:
+          enabled: true
+          pci_alias:
+            - name: "x710"
+              product_id: "1572"
+              vendor_id: "8086"
+            - name: "82599ES"
+              product_id: "10fb"
+              vendor_id: "8086"
+          pci_passthrough_whitelist:
+             - devname: "ens1f1"
+               physical_network: "physnet1"
+  node2:
+    roles:
+      - db
+      - compute
+      - openvswitch
+      - messaging
+    configs:
+      private_interface: enp3s0f0
+      public_interface: ens2f1
+      neutron:
+        physnets:
+          - name: "physnet1"
+            bridge_name: "br-ex"
+            interface: "ens2f1"
+            flat: false
+            vlan_range: "50:1030"
+        sriov:
+          enabled: true
+          devices:
+            - name: "enp3s0f1"
+              physnets:
+                - "physnet1"
+      nova:
+        sriov:
+          enabled: true
+          pci_alias:
+            - name: "x710"
+              product_id: "1572"
+              vendor_id: "8086"
+            - name: "82599ES"
+              product_id: "10fb"
+              vendor_id: "8086"
+          pci_passthrough_whitelist:
+             - devname: "enp3s0f1"
+               physical_network: "physnet1"
+
+roles:
+  db:
+    - database
+  messaging:
+    - rpc
+    - notifications
+  controller:
+    - etcd
+    - glance-api
+    - glance-registry
+    - heat-api-cfn
+    - heat-api
+    - heat-engine
+    - horizon
+    - keystone
+    - memcached
+    - neutron-dhcp-agent
+    - neutron-l3-agent
+    - neutron-metadata-agent
+    - neutron-server
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+  compute:
+    - neutron-sriov-nic-agent
+    - nova-compute
+    - nova-libvirt
+  openvswitch:
+    - neutron-openvswitch-agent
+    - openvswitch-db
+    - openvswitch-vswitchd
+
+configs:
+    percona:
+      cluster_size: 2
+    security:
+      tls:
+        create_certificates: false
+    etcd:
+      tls:
+        enabled: false
+    db:
+      tls:
+        enabled: false
+    rabbitmq:
+      tls:
+        enabled: false
+    keystone:
+      tls:
+        enabled: false
+    cinder:
+      tls:
+        enabled: false
+    heat:
+      tls:
+        enabled: false
+    glance:
+      tls:
+        enabled: false
+    horizon:
+      tls:
+        enabled: false
+    service:
+      database: galera
+    nova:
+      tls:
+        enabled: false
+      sriov:
+        enabled: true
+        pci_alias:
+          - name: "x710"
+            product_id: "1572"
+            vendor_id: "8086"
+          - name: "82599ES"
+            product_id: "10fb"
+            vendor_id: "8086"
+        pci_passthrough_whitelist:
+           - devname: "ens2f1"
+             physical_network: "physnet1"
+      logging_debug: true
+      scheduler:
+        enabled_filters:
+          - RetryFilter
+          - AvailabilityZoneFilter
+          - RamFilter
+          - DiskFilter
+          - ComputeFilter
+          - ComputeCapabilitiesFilter
+          - ImagePropertiesFilter
+          - ServerGroupAntiAffinityFilter
+          - ServerGroupAffinityFilter
+          - SameHostFilter
+          - DifferentHostFilter
+          - PciPassthroughFilter
+    neutron:
+      tls:
+        enabled: false
+      debug: true
+      ml2:
+        tenant_network_types:
+          - "vlan"
+      bootstrap:
+        internal:
+          enable: false
+
+
+replicas:
+  database: 2
